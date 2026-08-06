@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MamoMacro</string>
+    <string name="accessibility_service_description">Нужен для симуляции нажатий Пас + Удар в MamoBall. Используется только тобой.</string>
+</resources>
