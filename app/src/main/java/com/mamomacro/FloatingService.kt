@@ -20,15 +20,11 @@ class FloatingService : Service() {
     companion object {
         const val ACTION_SHOW_PLAY = "SHOW_PLAY"
 
-        // === НАСТРОЙКА КООРДИНАТ КЛИКА МАКРОСА ===
+        // === КООРДИНАТЫ КЛИКА МАКРОСА ===
         const val PASS_X = 2058f
         const val PASS_Y = 657f
         const val SHOOT_X = 2054f
         const val SHOOT_Y = 1050f
-
-        // === ТВОИ КООРДИНАТЫ ПОЛОЖЕНИЯ КНОПКИ PLAY ===
-        const val BUTTON_X = 2145
-        const val BUTTON_Y = 1466
     }
 
     private lateinit var windowManager: WindowManager
@@ -62,7 +58,7 @@ class FloatingService : Service() {
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("MamoMacro")
-            .setContentText("Кнопка Play активна")
+            .setContentText("Умная кнопка активна")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .build()
 
@@ -81,7 +77,6 @@ class FloatingService : Service() {
             elevation = 12f
         }
 
-        // Чёрный треугольник Play на белом круге
         val playIcon = View(this).apply {
             background = object : android.graphics.drawable.Drawable() {
                 override fun draw(canvas: android.graphics.Canvas) {
@@ -106,7 +101,7 @@ class FloatingService : Service() {
 
         view.addView(playIcon, FrameLayout.LayoutParams(size, size))
 
-        // Флаги окон для работы мультитача в обход системных ограничений
+        // FLAG_WATCH_OUTSIDE_TOUCH — заставляет окно слушать клики по всему экрану
         val params = WindowManager.LayoutParams(
             size, size,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -116,17 +111,28 @@ class FloatingService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = BUTTON_X
-            y = BUTTON_Y
+            x = 2145
+            y = 1466
         }
 
-        // Мгновенный триггер при первом же касании (убирает конфликт с зажатым джойстиком)
         view.setOnTouchListener { _, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                triggerMacro()
-                view.performClick()
+            when (event.actionMasked) {
+                // Если кликнули прямо по самой кнопке
+                MotionEvent.ACTION_DOWN -> {
+                    triggerMacro()
+                    true
+                }
+                // Ловим касания ВНЕ кнопки (когда палец водит джойстик или отпускает его)
+                MotionEvent.ACTION_OUTSIDE -> {
+                    // Перемещаем кнопку ближе к месту движения (на основе rawX / rawY)
+                    // Чтобы она "улетала" или подстраивалась, как в оригинале
+                    params.x = (event.rawX).toInt() - (size / 2)
+                    params.y = (event.rawY).toInt() - (size / 2)
+                    windowManager.updateViewLayout(view, params)
+                    true
+                }
+                else -> false
             }
-            true
         }
 
         windowManager.addView(view, params)
@@ -139,8 +145,6 @@ class FloatingService : Service() {
             Toast.makeText(this, "Accessibility не включён!", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Вызов твоего макроса
         service.performMacro(PASS_X, PASS_Y, SHOOT_X, SHOOT_Y)
     }
 
