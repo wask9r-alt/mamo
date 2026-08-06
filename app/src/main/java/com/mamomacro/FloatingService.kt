@@ -75,12 +75,6 @@ class FloatingService : Service() {
                 setColor(Color.WHITE)
             }
             elevation = 12f
-            // Разрешаем мультитач внутри контейнера
-            isSplitTouchEnabled = true
-            // Обход блокировки ненадежных касаний для Android 12+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                setAllowClickWhenObscured(true)
-            }
         }
 
         // Чёрный треугольник Play на белом круге (как YouTube)
@@ -108,13 +102,12 @@ class FloatingService : Service() {
 
         view.addView(playIcon, FrameLayout.LayoutParams(size, size))
 
-        // Настройка параметров окна с флагами мультитача
+        // Оставляем только чистые флаги окон. Этого хватит для сквозного нажатия!
         val params = WindowManager.LayoutParams(
             size, size,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or 
-            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -182,6 +175,6 @@ class FloatingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        removeAll()
+        removeAllViews() // Пофиксено: теперь вызывается правильный метод
     }
 }
