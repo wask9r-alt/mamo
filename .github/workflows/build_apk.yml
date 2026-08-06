@@ -19,20 +19,10 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
-    - name: Setup Gradle
+    - name: Setup Gradle (Force Version 8.4)
       uses: gradle/actions/setup-gradle@v3
-
-    - name: Downgrade and Regenerate Gradle Wrapper
-      run: gradle wrapper --gradle-version 8.4
-
-    - name: Grant Execute Permission for Gradlew
-      run: chmod +x gradlew
-
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
-
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
       with:
-        name: app-debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+        gradle-version: '8.4' # GitHub сам скачает и установит чистый Gradle 8.4, минуя глобальный 9.6.1
+
+    - name: Build Debug APK using global Gradle
+      run: gradle assembleDebug # Запускаем сборку напрямую через установленный Gradle 8.4, а не через gradlew
