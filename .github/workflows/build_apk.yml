@@ -22,8 +22,8 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Regenerate Gradle Wrapper
-      run: gradle wrapper
+    - name: Downgrade and Regenerate Gradle Wrapper
+      run: gradle wrapper --gradle-version 8.4
 
     - name: Grant Execute Permission for Gradlew
       run: chmod +x gradlew
