@@ -20,11 +20,15 @@ class FloatingService : Service() {
     companion object {
         const val ACTION_SHOW_PLAY = "SHOW_PLAY"
 
-        // Координаты (захардкожены)
+        // === НАСТРОЙКА КООРДИНАТ КЛИКА МАКРОСА ===
         const val PASS_X = 2058f
         const val PASS_Y = 657f
         const val SHOOT_X = 2054f
         const val SHOOT_Y = 1050f
+
+        // === ТВОИ КООРДИНАТЫ ПОЛОЖЕНИЯ КНОПКИ PLAY ===
+        const val BUTTON_X = 2145
+        const val BUTTON_Y = 1466
     }
 
     private lateinit var windowManager: WindowManager
@@ -77,7 +81,7 @@ class FloatingService : Service() {
             elevation = 12f
         }
 
-        // Чёрный треугольник Play на белом круге (как YouTube)
+        // Чёрный треугольник Play на белом круге
         val playIcon = View(this).apply {
             background = object : android.graphics.drawable.Drawable() {
                 override fun draw(canvas: android.graphics.Canvas) {
@@ -102,53 +106,27 @@ class FloatingService : Service() {
 
         view.addView(playIcon, FrameLayout.LayoutParams(size, size))
 
-        // Оставляем только чистые флаги окон. Этого хватит для сквозного нажатия!
+        // Флаги окон для работы мультитача в обход системных ограничений
         val params = WindowManager.LayoutParams(
             size, size,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 80
-            y = 400
+            x = BUTTON_X
+            y = BUTTON_Y
         }
 
-        // Перетаскивание + клик
-        var initialX = 0
-        var initialY = 0
-        var initialTouchX = 0f
-        var initialTouchY = 0f
-        var isClick = true
-
+        // Мгновенный триггер при первом же касании (убирает конфликт с зажатым джойстиком)
         view.setOnTouchListener { _, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    initialX = params.x
-                    initialY = params.y
-                    initialTouchX = event.rawX
-                    initialTouchY = event.rawY
-                    isClick = true
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = (event.rawX - initialTouchX).toInt()
-                    val dy = (event.rawY - initialTouchY).toInt()
-                    if (Math.abs(dx) > 12 || Math.abs(dy) > 12) isClick = false
-                    params.x = initialX + dx
-                    params.y = initialY + dy
-                    windowManager.updateViewLayout(view, params)
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (isClick) {
-                        triggerMacro()
-                    }
-                    true
-                }
-                else -> false
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                triggerMacro()
+                view.performClick()
             }
+            true
         }
 
         windowManager.addView(view, params)
@@ -162,7 +140,7 @@ class FloatingService : Service() {
             return
         }
 
-        // Пас сразу, Удар через 15 мс
+        // Вызов твоего макроса
         service.performMacro(PASS_X, PASS_Y, SHOOT_X, SHOOT_Y)
     }
 
@@ -175,6 +153,6 @@ class FloatingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        removeAllViews() // Пофиксено: теперь вызывается правильный метод
+        removeAllViews()
     }
 }
