@@ -1,9 +1,9 @@
-yamlname: Build Android APK
+name: Build Android APK
 
 on:
   push:
-    branches: [ "main", "master" ] # Сборка будет запускаться при каждом обновлении кода в этих ветках
-  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
